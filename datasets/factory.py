@@ -6,12 +6,12 @@ def create_dataset(datadir: str, dataname: str):
     trainset = __import__('datasets').__dict__[f'{dataname}Dataset'](
         root      = os.path.join(datadir,dataname), 
         train     = True, 
-        download  = True, 
+        download  = True
     )
     testset = __import__('datasets').__dict__[f'{dataname}Dataset'](
         root      = os.path.join(datadir,dataname), 
         train     = False, 
-        download  = True, 
+        download  = True
     )
 
     return trainset, testset

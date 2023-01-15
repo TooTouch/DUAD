@@ -1,6 +1,6 @@
 from torchvision import datasets
 import numpy as np
-
+from torchvision import transforms
 
 class DUADDataset:
     def train_preprocessing(self):
@@ -36,12 +36,19 @@ class CIFAR10Dataset(DUADDataset, datasets.CIFAR10):
         self, root, train: bool = True, download: bool = True,
         normal_class: int = 0, abnormal_sample_size: int = 450, random_state: int = 42
     ):
-        datasets.CIFAR10.__init__(self, root=root, train=train, download=download)    
+        datasets.CIFAR10.__init__(
+            self, root=root, train=train, download=download
+        )    
         DUADDataset.__init__(self)
 
         self.normal_class = normal_class
         self.abnormal_sample_size = abnormal_sample_size
         self.random_state = random_state
+
+        self.transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+        ])
         
         if train:
             self.train_preprocessing()
@@ -50,7 +57,9 @@ class CIFAR10Dataset(DUADDataset, datasets.CIFAR10):
         
     def __getitem__(self, idx):
         
-        return self.data[idx], self.targets[idx]
+        data_i, target_i = self.data[idx], self.targets[idx]
+
+        return self.transform(data_i), target_i
         
         
 class MNISTDataset(DUADDataset, datasets.MNIST):
@@ -58,12 +67,17 @@ class MNISTDataset(DUADDataset, datasets.MNIST):
         self, root, train: bool = True, download: bool = True,
         normal_class: int = 4, abnormal_sample_size: int = 265, random_state: int = 42
     ):
-        datasets.MNIST.__init__(self, root=root, train=train, download=download)    
+        datasets.MNIST.__init__(
+            self, root=root, train=train, download=download
+        )    
         DUADDataset.__init__(self)
 
         self.normal_class = normal_class
         self.abnormal_sample_size = abnormal_sample_size
         self.random_state = random_state
+        self.transform = transforms.Compose([
+            transforms.ToTensor(),
+        ])
         
         if train:
             self.train_preprocessing()
@@ -72,5 +86,7 @@ class MNISTDataset(DUADDataset, datasets.MNIST):
         
     def __getitem__(self, idx):
         
-        return self.data[idx], self.targets[idx]
+        data_i, target_i = self.data[idx], self.targets[idx]
+
+        return self.transform(data_i), target_i
         
