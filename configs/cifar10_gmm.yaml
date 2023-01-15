@@ -1,0 +1,40 @@
+EXP_NAME: DUAD_CIFAR10_GMM
+SEED: 42
+
+DATASET:
+  datadir: /datasets
+  name: CIFAR10
+
+CLUSTER:
+  p0: 0.25
+  p: 0.2
+  r: 5
+  name: GMM
+  parameters:
+    num_cluster: 20
+    max_iter: 10
+
+MODEL:
+  in_channels: 3
+  flatten_features: 4096
+  latent_dim: 20
+
+TRAIN:
+  batch_size: 8
+  num_workers: 4
+  epochs: 10
+  use_wandb: True
+
+OPTIMIZER:
+  lr: 0.003
+
+SCHEDULER:
+  min_lr: 0.0001
+  warmup_ratio: 0.1
+  use_scheduler: True
+
+LOG:
+  log_interval: 100
+
+RESULT:
+  savedir: './saved_model/CIFAR10'
