@@ -3,7 +3,8 @@ from .ae import AutoEncoder
 
 class DUAD(nn.Module):
     def __init__(
-        self, r: int = 10, p0: int = .35, p: int = .30):
+        self, in_channels: int = 3,
+        r: int = 10, p0: int = .35, p: int = .30):
 
         super(DUAD, self).__init__()
 
@@ -12,7 +13,7 @@ class DUAD(nn.Module):
         self.r = r
         self.cosim = nn.CosineSimilarity()
 
-        self.ae = AutoEncoder()
+        self.ae = AutoEncoder(in_channels=in_channels)
 
     def forward(self, x):
         z_c = self.ae.encoder(x)

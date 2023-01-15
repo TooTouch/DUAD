@@ -1,13 +1,13 @@
 import torch.nn as nn
 
 class AutoEncoder(nn.Module):
-    def __init__(self):
+    def __init__(self, in_channels: int = 3):
         super(AutoEncoder, self).__init__()
 
         
         self.encoder = nn.Sequential(
             nn.Conv2d(
-                in_channels=3,      # input height
+                in_channels=in_channels,      # input height
                 out_channels=16,    # n_filters
                 kernel_size=3,      # filter size
                 stride=1,           # filter movement/step
@@ -99,7 +99,7 @@ class AutoEncoder(nn.Module):
             ),
             nn.Conv2d(
                 in_channels=3,      # input height
-                out_channels=3,    # n_filters
+                out_channels=in_channels,    # n_filters
                 kernel_size=3,      # filter size
                 stride=1,           # filter movement/step
                 padding=1,      
