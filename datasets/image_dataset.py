@@ -29,6 +29,9 @@ class DUADDataset:
 
         setattr(self, 'targets', targets)
 
+    def update(self, select_indice):
+        self.data = self.data[select_indice]
+        self.targets = self.targets[select_indice]
 
 
 class CIFAR10Dataset(DUADDataset, datasets.CIFAR10):
