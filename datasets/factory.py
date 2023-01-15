@@ -17,11 +17,11 @@ def create_dataset(datadir: str, dataname: str):
     return trainset, testset
 
 
-def create_dataloader(dataset, batch_size: int = 4, shuffle: bool = False):
+def create_dataloader(dataset, batch_size: int = 4, shuffle: bool = False, num_workers: int = 0):
 
     return DataLoader(
         dataset     = dataset,
         batch_size  = batch_size,
         shuffle     = shuffle,
-        num_workers = 2
+        num_workers = num_workers
     )
