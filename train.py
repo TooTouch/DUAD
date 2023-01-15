@@ -2,6 +2,7 @@ import time
 import json
 import os 
 import wandb
+import numpy as np
 import logging
 from collections import OrderedDict
 
@@ -49,7 +50,7 @@ def train(model, dataloader, optimizer, log_interval: int, device: str) -> dict:
         z = torch.cat([z_c.flatten(start_dim=1), z_r.unsqueeze(1)],dim=1).detach().cpu()
         cluster_features = torch.cat([cluster_features, z])
 
-        loss = z_r.mean()
+        loss = 1-z_r.mean()
         loss.backward()
 
         # loss update
@@ -92,7 +93,7 @@ def test(model, dataloader, log_interval: int, device: str) -> dict:
             _, z_r = model(inputs)
 
             # loss 
-            loss = z_r.mean().item()
+            loss = 1-z_r.mean().item()
             
             # total loss
             total_loss += loss
