@@ -1,7 +1,7 @@
 import torch.nn as nn
 
 class AutoEncoder(nn.Module):
-    def __init__(self, in_channels: int = 3):
+    def __init__(self, in_channels: int = 3, flatten_features: int = 4096, latent_dim: int = 10):
         super(AutoEncoder, self).__init__()
 
         
@@ -39,11 +39,11 @@ class AutoEncoder(nn.Module):
                 padding=2,      
             ),      
             nn.LeakyReLU(),    # activation
-            nn.MaxPool2d(kernel_size=2),    
+            nn.MaxPool2d(kernel_size=2),   
         )
         
         self.decoder = nn.Sequential(
-                nn.ConvTranspose2d(
+            nn.ConvTranspose2d(
                 in_channels=64,      # input height
                 out_channels=32,    # n_filters
                 kernel_size=2,      # filter size
@@ -105,9 +105,23 @@ class AutoEncoder(nn.Module):
                 padding=1,      
             ),    
             nn.ReLU(), # activation 
-        )
+        )        
 
-    def forward(self, x):
-        encoded = self.encoder(x)
-        decoded = self.decoder(encoded)
-        return decoded
+        self.enc_linear = nn.Linear(flatten_features, latent_dim)
+        self.dec_linear = nn.Linear(latent_dim, flatten_features)
+
+    def encode(self, x):
+        x_out = self.encoder(x) # B x 64 x 8 x 8
+        x_size = x_out.size()
+
+        z = self.enc_linear(x_out.flatten(start_dim=1))
+
+        return z, x_size
+
+    def decode(self, z, x_size):
+        z = self.dec_linear(z)
+        x = z.view(x_size)
+
+        out = self.decoder(x)
+
+        return out
