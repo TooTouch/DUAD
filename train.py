@@ -6,10 +6,7 @@ import logging
 from collections import OrderedDict
 
 import torch
-import torch.nn.functional as F
-import numpy as np
-from typing import List
-from anomalib.utils.metrics import AUPRO, AUROC
+from sklearn.metrics import roc_auc_score
 
 _logger = logging.getLogger('train')
 
@@ -80,32 +77,29 @@ def train(model, dataloader, optimizer, log_interval: int, device: str) -> dict:
     return OrderedDict([('loss',losses_m.avg)]), cluster_features
         
 def test(model, dataloader, log_interval: int, device: str) -> dict:
-    auroc_image_metric = AUROC(num_classes=1, pos_label=1)
-
     # reset
-    auroc_image_metric.reset()
+    total_targets = []
+    total_score = []
     
     total_loss = 0
     
     model.eval()
     with torch.no_grad():
         for idx, (inputs, targets) in enumerate(dataloader):
-            inputs, targets = inputs.to(device), targets.to(device)
+            inputs = inputs.to(device)
             
             # predict
             _, z_r = model(inputs)
-            
+
             # loss 
             loss = z_r.mean().item()
             
-            # total loss and acc
+            # total loss
             total_loss += loss
             
             # update metrics
-            auroc_image_metric.update(
-                preds  = z_r.cpu(), 
-                target = targets.cpu()
-            )
+            total_score.extend(z_r.cpu().tolist())
+            total_targets.extend(targets.tolist())
 
             if idx % log_interval == 0 and idx != 0: 
                 _logger.info('TEST [%d/%d]: Loss: %.3f' % 
@@ -113,11 +107,11 @@ def test(model, dataloader, log_interval: int, device: str) -> dict:
 
     # metrics    
     metrics = {
-        'AUROC(image)':auroc_image_metric.compute().item(),
+        'AUROC(image)':roc_auc_score(y_true=total_targets, y_score=total_score),
         'loss':total_loss/len(dataloader)
     }
 
-    _logger.info('TEST: AUROC(image): %.3f%% | Loss: %.3f%%' % (metrics['AUROC(image)'], metrics['loss']))
+    _logger.info('TEST: AUROC(image): %.3f%% | Loss: %.3f' % (metrics['AUROC(image)'], metrics['loss']))
 
     return metrics
 
@@ -137,7 +131,7 @@ def apply_clustering(cluster, cluster_init: int, cluster_features: torch.Tensor)
 
 def fit(
     model, cluster, trainloader, testloader, optimizer, scheduler, 
-    epochs: int, savedir: str, log_interval: int, device: str
+    epochs: int, savedir: str, log_interval: int, device: str, use_wandb: bool
 ) -> None:
 
     best_auroc = 0
@@ -145,6 +139,10 @@ def fit(
     cluster_init = True
 
     for epoch in range(epochs):
+        # step scheduler
+        if scheduler:
+            scheduler.step()
+
         _logger.info(f'\nEpoch: {epoch+1}/{epochs}')
         train_metrics, cluster_features = train(model, trainloader, optimizer, log_interval, device)
         eval_metrics = test(model, testloader, log_interval, device)
@@ -161,33 +159,29 @@ def fit(
 
             cluster_init = False
 
-
         # wandb
-        metrics = OrderedDict(
-            lr          = optimizer.param_groups[0]['lr'],
-            nb_trainset = len(trainloader.dataset.data)
-        )
-        metrics.update([('train_' + k, v) for k, v in train_metrics.items()])
-        metrics.update([('eval_' + k, v) for k, v in eval_metrics.items()])
-        wandb.log(metrics, step=step)
+        if use_wandb:
+            metrics = OrderedDict(
+                lr          = optimizer.param_groups[0]['lr'],
+                nb_trainset = len(trainloader.dataset.data)
+            )
+            metrics.update([('train_' + k, v) for k, v in train_metrics.items()])
+            metrics.update([('eval_' + k, v) for k, v in eval_metrics.items()])
+            wandb.log(metrics, step=step)
 
         step += 1
 
-        # step scheduler
-        if scheduler:
-            scheduler.step()
-
         # checkpoint
-        if best_auroc < eval_metrics['eval_AUROC(image)']:
+        if best_auroc < eval_metrics['AUROC(image)']:
             # save results
-            state = {'best_epoch':epoch, 'best_auroc':eval_metrics['eval_AUROC(image)']}
+            state = {'best_epoch':epoch, 'best_auroc':eval_metrics['AUROC(image)']}
             json.dump(state, open(os.path.join(savedir, f'best_results.json'),'w'), indent=4)
 
             # save model
             torch.save(model.state_dict(), os.path.join(savedir, f'best_model.pt'))
             
-            _logger.info('Best AUROC {0:.3%} to {1:.3%}'.format(best_auroc, eval_metrics['eval_AUROC(image)']))
+            _logger.info('Best AUROC {0:.3%} to {1:.3%}'.format(best_auroc, eval_metrics['AUROC(image)']))
 
-            best_auroc = eval_metrics['eval_AUROC(image)']
+            best_auroc = eval_metrics['AUROC(image)']
 
-    _logger.info('Best Metric: {0:.3%} (epoch {1:})'.format(state['eval_AUROC(image)'], state['best_epoch']))
+    _logger.info('Best Metric: {0:.3%} (epoch {1:})'.format(state['best_auroc'], state['best_epoch']))
