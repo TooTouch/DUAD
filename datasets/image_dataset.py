@@ -1,0 +1,76 @@
+from torchvision import datasets
+import numpy as np
+
+
+class DUADDataset:
+    def train_preprocessing(self):
+        np.random.seed(self.random_state)
+        
+        # select normal
+        normal_indices = np.where(np.array(self.targets)==self.normal_class)[0]
+        data = self.data[normal_indices]
+        targets = np.zeros(normal_indices.shape)
+        
+        # sampling abnormal
+        for t_idx in self.class_to_idx.values():
+            if t_idx != self.normal_class:
+                abnormal_indices = np.where(np.array(self.targets)==t_idx)[0]
+                abnormal_indices = np.random.choice(abnormal_indices, size=self.abnormal_sample_size, replace=False)
+        
+                data = np.concatenate([data, self.data[abnormal_indices]])
+                targets = np.concatenate([targets, np.ones(abnormal_indices.shape)])
+        
+        setattr(self,'data', data)
+        setattr(self,'targets', targets)
+
+    def test_preprocessing(self):
+        targets = np.zeros(len(self.targets))
+        targets[np.where(np.array(self.targets)!=self.normal_class)[0]] = 1
+
+        setattr(self, 'targets', targets)
+
+
+
+class CIFAR10Dataset(DUADDataset, datasets.CIFAR10):
+    def __init__(
+        self, root, train: bool = True, download: bool = True,
+        normal_class: int = 0, abnormal_sample_size: int = 450, random_state: int = 42
+    ):
+        datasets.CIFAR10.__init__(self, root=root, train=train, download=download)    
+        DUADDataset.__init__(self)
+
+        self.normal_class = normal_class
+        self.abnormal_sample_size = abnormal_sample_size
+        self.random_state = random_state
+        
+        if train:
+            self.train_preprocessing()
+        else:
+            self.test_preprocessing()
+        
+    def __getitem__(self, idx):
+        
+        return self.data[idx], self.targets[idx]
+        
+        
+class MNISTDataset(DUADDataset, datasets.MNIST):
+    def __init__(
+        self, root, train: bool = True, download: bool = True,
+        normal_class: int = 4, abnormal_sample_size: int = 265, random_state: int = 42
+    ):
+        datasets.MNIST.__init__(self, root=root, train=train, download=download)    
+        DUADDataset.__init__(self)
+
+        self.normal_class = normal_class
+        self.abnormal_sample_size = abnormal_sample_size
+        self.random_state = random_state
+        
+        if train:
+            self.train_preprocessing()
+        else:
+            self.test_preprocessing()
+        
+    def __getitem__(self, idx):
+        
+        return self.data[idx], self.targets[idx]
+        
