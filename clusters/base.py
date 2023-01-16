@@ -2,10 +2,11 @@ import torch
 import numpy as np
 
 class BaseCluster:
-    def __init__(self, p0: float = 0.25, p: float = 0.2, r: int = 5):
+    def __init__(self, p0: float = 0.25, p: float = 0.2, r: int = 5, reeval_limit: int = 10):
         self.p0 = p0
         self.p = p
         self.r = r 
+        self.reeval_limit = reeval_limit
 
     def sampling(
         self, threshold: float, cluster_features: torch.Tensor, num_cluster: int, 

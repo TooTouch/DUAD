@@ -64,15 +64,16 @@ def run(cfg):
 
     # build clustsering method
     cluster = create_cluster(
-        name   = cfg['CLUSTER']['name'],
-        params = cfg['CLUSTER']['parameters'],
-        p0     = cfg['CLUSTER']['p0'],
-        p      = cfg['CLUSTER']['p'],
-        r      = cfg['CLUSTER']['r'],
+        name         = cfg['CLUSTER']['name'],
+        params       = cfg['CLUSTER']['parameters'],
+        p0           = cfg['CLUSTER']['p0'],
+        p            = cfg['CLUSTER']['p'],
+        r            = cfg['CLUSTER']['r'],
+        reeval_limit = cfg['CLUSTER']['reeval_limit']
     )
 
     # set optimizer
-    optimizer = torch.optim.SGD(
+    optimizer = torch.optim.Adam(
         params = model.parameters(), 
         lr     = cfg['OPTIMIZER']['lr'],
     )
