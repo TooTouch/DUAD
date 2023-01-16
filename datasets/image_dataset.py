@@ -37,7 +37,7 @@ class DUADDataset:
 class CIFAR10Dataset(DUADDataset, datasets.CIFAR10):
     def __init__(
         self, root, train: bool = True, download: bool = True,
-        normal_class: int = 0, abnormal_sample_size: int = 450, random_state: int = 42
+        normal_class: int = 0, abnormal_sample_size: int = 50, random_state: int = 42
     ):
         datasets.CIFAR10.__init__(
             self, root=root, train=train, download=download
@@ -68,7 +68,7 @@ class CIFAR10Dataset(DUADDataset, datasets.CIFAR10):
 class MNISTDataset(DUADDataset, datasets.MNIST):
     def __init__(
         self, root, train: bool = True, download: bool = True,
-        normal_class: int = 4, abnormal_sample_size: int = 265, random_state: int = 42
+        normal_class: int = 4, abnormal_sample_size: int = 30, random_state: int = 42
     ):
         datasets.MNIST.__init__(
             self, root=root, train=train, download=download
