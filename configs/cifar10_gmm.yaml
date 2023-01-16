@@ -6,24 +6,25 @@ DATASET:
   name: CIFAR10
 
 CLUSTER:
-  p0: 0.25
-  p: 0.2
+  p0: 0.15
+  p: 0.1
   r: 5
+  reeval_limit: 10
   name: GMM
   parameters:
     num_cluster: 20
-    max_iter: 10
+    max_iter: 200
 
 MODEL:
   in_channels: 3
   flatten_features: 4096
-  latent_dim: 20
+  latent_dim: 32
 
 TRAIN:
   batch_size: 8
   num_workers: 4
-  epochs: 10
-  use_wandb: True
+  epochs: 100
+  use_wandb: true
 
 OPTIMIZER:
   lr: 0.003
@@ -31,7 +32,7 @@ OPTIMIZER:
 SCHEDULER:
   min_lr: 0.0001
   warmup_ratio: 0.1
-  use_scheduler: True
+  use_scheduler: true
 
 LOG:
   log_interval: 100
