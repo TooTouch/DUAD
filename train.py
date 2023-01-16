@@ -77,44 +77,54 @@ def train(model, dataloader, optimizer, log_interval: int, device: str) -> dict:
     
     return OrderedDict([('loss',losses_m.avg)]), cluster_features
         
-def test(model, dataloader, log_interval: int, device: str) -> dict:
+def test(model, dataloader, log_interval: int, device: str, return_cluster_features: bool = False) -> dict:
     # reset
     total_targets = []
     total_score = []
     
     total_loss = 0
     
+    if return_cluster_features:
+        cluster_features = torch.Tensor([])
+
     model.eval()
     with torch.no_grad():
         for idx, (inputs, targets) in enumerate(dataloader):
             inputs = inputs.to(device)
             
             # predict
-            _, z_r = model(inputs)
+            z_c, z_r = model(inputs)
 
-            # loss 
-            loss = 1-z_r.mean().item()
-            
-            # total loss
-            total_loss += loss
-            
-            # update metrics
-            total_score.extend((1-z_r).cpu().tolist())
-            total_targets.extend(targets.tolist())
+            if return_cluster_features:
+                z = torch.cat([z_c.flatten(start_dim=1), z_r.unsqueeze(1)],dim=1).detach().cpu()
+                cluster_features = torch.cat([cluster_features, z])
+            else:
+                # loss 
+                loss = 1-z_r.mean().item()
+                
+                # total loss
+                total_loss += loss
+                
+                # update metrics
+                total_score.extend((1-z_r).cpu().tolist())
+                total_targets.extend(targets.tolist())
 
-            if (idx+1) % log_interval == 0 or idx == len(dataloader): 
-                _logger.info('TEST [%d/%d]: Loss: %.3f' % 
-                            (idx+1, len(dataloader), total_loss/(idx+1)))
+                if (idx+1) % log_interval == 0 or idx == len(dataloader): 
+                    _logger.info('TEST [%d/%d]: Loss: %.3f' % 
+                                (idx+1, len(dataloader), total_loss/(idx+1)))
 
-    # metrics    
-    metrics = {
-        'AUROC(image)':roc_auc_score(y_true=total_targets, y_score=total_score),
-        'loss':total_loss/len(dataloader)
-    }
+    if return_cluster_features:
+        return cluster_features
+    else:
+        # metrics    
+        metrics = {
+            'AUROC(image)':roc_auc_score(y_true=total_targets, y_score=total_score),
+            'loss':total_loss/len(dataloader)
+        }
 
-    _logger.info('TEST: AUROC(image): %.3f%% | Loss: %.3f' % (metrics['AUROC(image)'], metrics['loss']))
+        _logger.info('TEST: AUROC(image): %.3f%% | Loss: %.3f' % (metrics['AUROC(image)'], metrics['loss']))
 
-    return metrics
+        return metrics
 
 
 def apply_clustering(cluster, cluster_init: int, cluster_features: torch.Tensor):
@@ -137,9 +147,19 @@ def fit(
 
     best_auroc = 0
     step = 0
-    cluster_init = True
     reeval_count = 0
 
+    # init cluster scoring
+    cluster_features = test(model, trainloader, log_interval, device, return_cluster_features=True)
+    selected_indices = apply_clustering(
+        cluster          = cluster,
+        cluster_init     = True,
+        cluster_features = cluster_features
+    )       
+
+    trainloader.dataset.update(select_indice=selected_indices)
+
+    # training
     for epoch in range(epochs):
         # step scheduler
         if scheduler:
@@ -153,13 +173,11 @@ def fit(
         if (((epoch+1) % cluster.r) == 0) and (reeval_count < cluster.reeval_limit):
             selected_indices = apply_clustering(
                 cluster          = cluster,
-                cluster_init     = cluster_init,
+                cluster_init     = False,
                 cluster_features = cluster_features
             )       
 
             trainloader.dataset.update(select_indice=selected_indices)
-
-            cluster_init = False
             reeval_count += 1
 
         # wandb
