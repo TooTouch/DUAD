@@ -1,5 +1,5 @@
 # DUAD
-Unofficial Implementation for Deep Unsupervised Anomaly Detection (DUAD)
+Unofficial Implementation for [Deep Unsupervised Anomaly Detection (DUAD)](https://openaccess.thecvf.com/content/WACV2021/papers/Li_Deep_Unsupervised_Anomaly_Detection_WACV_2021_paper.pdf)
 
 
 # Environments
