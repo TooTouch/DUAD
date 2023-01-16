@@ -60,7 +60,7 @@ def train(model, dataloader, optimizer, log_interval: int, device: str) -> dict:
         
         batch_time_m.update(time.time() - end)
     
-        if idx % log_interval == 0 and idx != 0: 
+        if (idx+1) % log_interval == 0 or idx == len(dataloader): 
             _logger.info('TRAIN [{:>4d}/{}] Loss: {loss.val:>6.4f} ({loss.avg:>6.4f}) '
                         'LR: {lr:.3e} '
                         'Time: {batch_time.val:.3f}s, {rate:>7.2f}/s ({batch_time.avg:.3f}s, {rate_avg:>7.2f}/s) '
@@ -99,10 +99,10 @@ def test(model, dataloader, log_interval: int, device: str) -> dict:
             total_loss += loss
             
             # update metrics
-            total_score.extend(z_r.cpu().tolist())
+            total_score.extend((1-z_r).cpu().tolist())
             total_targets.extend(targets.tolist())
 
-            if idx % log_interval == 0 and idx != 0: 
+            if (idx+1) % log_interval == 0 or idx == len(dataloader): 
                 _logger.info('TEST [%d/%d]: Loss: %.3f' % 
                             (idx+1, len(dataloader), total_loss/(idx+1)))
 
@@ -138,6 +138,7 @@ def fit(
     best_auroc = 0
     step = 0
     cluster_init = True
+    reeval_count = 0
 
     for epoch in range(epochs):
         # step scheduler
@@ -149,7 +150,7 @@ def fit(
         eval_metrics = test(model, testloader, log_interval, device)
 
         # clustering and sub-sampling
-        if (epoch % cluster.r) == 0:
+        if (((epoch+1) % cluster.r) == 0) and (reeval_count < cluster.reeval_limit):
             selected_indices = apply_clustering(
                 cluster          = cluster,
                 cluster_init     = cluster_init,
@@ -159,6 +160,7 @@ def fit(
             trainloader.dataset.update(select_indice=selected_indices)
 
             cluster_init = False
+            reeval_count += 1
 
         # wandb
         if use_wandb:
