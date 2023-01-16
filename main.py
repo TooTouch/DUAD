@@ -73,7 +73,7 @@ def run(cfg):
     )
 
     # set optimizer
-    optimizer = torch.optim.Adam(
+    optimizer = torch.optim.SGD(
         params = model.parameters(), 
         lr     = cfg['OPTIMIZER']['lr'],
     )
