@@ -10,7 +10,6 @@ class GMM(BaseCluster):
         self.num_cluster = num_cluster
         self.max_iter = max_iter
 
-
         self.gmm = GaussianMixture(n_components=self.num_cluster, max_iter=self.max_iter, reg_covar=1e-5)
 
     def clustering(self, cluster_features: torch.Tensor):

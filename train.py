@@ -189,7 +189,6 @@ def fit(
             metrics.update([('train_' + k, v) for k, v in train_metrics.items()])
             metrics.update([('eval_' + k, v) for k, v in eval_metrics.items()])
             wandb.log(metrics, step=step)
-
         step += 1
 
         # checkpoint
