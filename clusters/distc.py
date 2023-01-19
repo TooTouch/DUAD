@@ -7,10 +7,8 @@ from tqdm import tqdm
 
 class DistClustering(BaseCluster):
     def __init__(
-        self, p0: float = 0.25, p: float = 0.2, r: int = 5, reeval_limit: int = 10,
-        num_cluster: int = 20, max_iter: int = 400):
+        self, p0: float = 0.25, p: float = 0.2, r: int = 5, reeval_limit: int = 10, max_iter: int = 400):
         super(DistClustering, self).__init__(p0=p0, p=p, r=r, reeval_limit=reeval_limit)
-        self.num_cluster = num_cluster
         self.max_iter = max_iter
         
     def clustering(self,cluster_features: torch.Tensor):
@@ -34,7 +32,7 @@ def cluster(features, thres=0.05, min_clus=5, max_dist=0.02, normalize=True):
     
     pair_dist = scipy.spatial.distance.pdist(features, 'sqeuclidean')
     pair_dist = scipy.spatial.distance.squareform(pair_dist)
-    print(f'pair-distance 계산 완료')
+    #print(f'pair-distance 계산 완료')
     # Loop initialization
     inf = 1000.0
     pair_dist_base = pair_dist.copy()
@@ -45,12 +43,8 @@ def cluster(features, thres=0.05, min_clus=5, max_dist=0.02, normalize=True):
     finished = False
 
     while not finished:
-        print('\n----------------')
-        print(f' while 진입 | 현재 클러스터 : {cur_cluster}')
-        print('----------------')
         finished = True
         if (sample_clusters > 0).sum() < len(features):
-            print('cur_vec, cur_distance 계산')
             i, j = np.unravel_index(pair_dist.argmin(), pair_dist.shape)
             cur_dist = pair_dist[i, j]
             print(f'{cur_dist}')
@@ -66,7 +60,6 @@ def cluster(features, thres=0.05, min_clus=5, max_dist=0.02, normalize=True):
             '''
             
             a[j] = b[i] = 0 
-            print(f"거리 차 : {np.abs(a - b).mean()}") 
             if np.abs(a - b).mean() > thres and cur_dist <= max_dist:
                 '''
                 a,b 는 가장 가까운 벡터 두개의 pair인데 이게 thres보다 먼 경우 
@@ -84,7 +77,6 @@ def cluster(features, thres=0.05, min_clus=5, max_dist=0.02, normalize=True):
                 최소 거리가 max_dist보다 낮은 경우 해당 pair는 하나의 클러스터에 있다고 판단
                 클러스터링 할당 진행 
                 '''
-                print(f"cluster 할당")
                 clus = sample_clusters.copy()
                 
                 clus[i] = clus[j] = cur_cluster
@@ -97,11 +89,9 @@ def cluster(features, thres=0.05, min_clus=5, max_dist=0.02, normalize=True):
 
                 cur_dist = compute_dist(pair_dist_base, loc_ind)
                 cur_vec = compute_vec(pair_dist_base, loc_ind, cur_dist)
-                print(f"cur_vec.shape : {np.array(cur_vec).shape}")
                 clus = clus_strange(pair_dist_base, clus, cur_vec, cur_dist, thres, thres, cur_cluster)
 
                 if (clus == cur_cluster).sum() > min_clus:
-                    print('cluster 변경 진입')
                     
                     sample_clusters = clus
                     cluster_distances[cur_cluster] = cur_dist
@@ -111,7 +101,6 @@ def cluster(features, thres=0.05, min_clus=5, max_dist=0.02, normalize=True):
                 finished = False
 
         if cur_dist > max_dist:
-            print('종료 조건')
             finished = True
 
     if normalize:
@@ -122,11 +111,7 @@ def cluster(features, thres=0.05, min_clus=5, max_dist=0.02, normalize=True):
     centers : features에서 해당 cluster에 속한 것의 가장 중간에 해당하는 벡터 값 -> centroid 
     
     cluster_distances : 해당 cluster 내에서 가장 짧은 pair의 거리 
-    '''
-    
-    # num_cluster  = len(np.unique(sample_clusters))
-    # cluster_pred = np.array(sample_clusters)
-    # cluster_centroid = np.array(centers)
+    '''    
     
     return centers, sample_clusters.tolist(), cluster_distances
 
@@ -157,10 +142,9 @@ def clus_strange(d, clus, cur_vec, cur_dist, thres_all, thres_loc, cur_clus):
     cur_clus             : 현재 할당 cluster 번호 
     '''
     change = True
-    print('\n clus_strange started')
     while change:
         change = False
-        for i in tqdm(range(len(clus))):
+        for i in range(len(clus)):
             if clus[i] != cur_clus: # 할당 되지 않은 것이 있다면 진행
                 continue
             for j in range(len(clus)):
@@ -176,7 +160,6 @@ def clus_strange(d, clus, cur_vec, cur_dist, thres_all, thres_loc, cur_clus):
                 dist : cur_clus의 고유 벡터 간의 거리 평균 
                 t    : j의 벡터와 현재 cur_clus로 할당되어 있는 벡터들 간의 거리 평균 
                 '''
-                #print(f'dist : {dist:.3f} | t-cur_dist : {np.abs(t-cur_dist):.3f}')
                 if dist < thres_all and abs(t - cur_dist) < thres_loc:
                     clus[j] = clus[i]
                     change = True
