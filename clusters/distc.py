@@ -5,10 +5,10 @@ import scipy
 import numpy as np 
 from tqdm import tqdm 
 
-class DistClustering(BaseCluster):
+class DistributionClustering(BaseCluster):
     def __init__(
-        self, p0: float = 0.25, p: float = 0.2, r: int = 5, reeval_limit: int = 10, max_iter: int = 400):
-        super(DistClustering, self).__init__(p0=p0, p=p, r=r, reeval_limit=reeval_limit)
+        self, p0: float = 0.25, p: float = 0.2, r: int = 5, reeval_limit: int = 10,num_cluster=20, max_iter: int = 400):
+        super(DistributionClustering, self).__init__(p0=p0, p=p, r=r, reeval_limit=reeval_limit)
         self.max_iter = max_iter
         
     def clustering(self,cluster_features: torch.Tensor):
@@ -32,7 +32,7 @@ def cluster(features, thres=0.05, min_clus=5, max_dist=0.02, normalize=True):
     
     pair_dist = scipy.spatial.distance.pdist(features, 'sqeuclidean')
     pair_dist = scipy.spatial.distance.squareform(pair_dist)
-    #print(f'pair-distance 계산 완료')
+    
     # Loop initialization
     inf = 1000.0
     pair_dist_base = pair_dist.copy()
@@ -41,17 +41,17 @@ def cluster(features, thres=0.05, min_clus=5, max_dist=0.02, normalize=True):
     cluster_distances = {}
     cur_cluster = 1
     finished = False
-
+    
+    print('\n----------------')
+    print('클러스터링 시작')
     while not finished:
+        print(f' 현재 클러스터 : {cur_cluster}')
         finished = True
         if (sample_clusters > 0).sum() < len(features):
             i, j = np.unravel_index(pair_dist.argmin(), pair_dist.shape)
             cur_dist = pair_dist[i, j]
-            print(f'{cur_dist}')
             pair_dist[i, j] = pair_dist[j, i] = inf # 다음에 안걸리게 최대치로 변경 
             cur_vec = compute_vec(pair_dist_base, [i, j], cur_dist) # i,j의 고유 벡터 
-            print(f"cur_dist : {cur_dist:.3f} | cur_vec_mean : {np.mean(cur_vec):.3f}")
-            print(f"cur_vec.shape : {np.array(cur_vec).shape}")
 
             a, b = pair_dist_base[i, :].copy(), pair_dist_base[j, :].copy()
             '''
@@ -144,7 +144,7 @@ def clus_strange(d, clus, cur_vec, cur_dist, thres_all, thres_loc, cur_clus):
     change = True
     while change:
         change = False
-        for i in range(len(clus)):
+        for i in tqdm(range(len(clus))):
             if clus[i] != cur_clus: # 할당 되지 않은 것이 있다면 진행
                 continue
             for j in range(len(clus)):
