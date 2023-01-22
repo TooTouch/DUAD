@@ -8,7 +8,7 @@ class DUAD(nn.Module):
         super(DUAD, self).__init__()
 
         self.cosim = nn.CosineSimilarity()
-
+        
         self.ae = AutoEncoder(in_channels=in_channels, flatten_features=flatten_features, latent_dim=latent_dim)
 
     def forward(self, x):

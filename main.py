@@ -75,7 +75,7 @@ def run(cfg):
     # set optimizer
     optimizer = torch.optim.SGD(
         params = model.parameters(), 
-        lr     = cfg['OPTIMIZER']['lr'],
+        lr     = cfg['OPTIMIZER']['lr']
     )
 
     if cfg['SCHEDULER']['use_scheduler']:

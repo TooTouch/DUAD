@@ -32,7 +32,7 @@ class DUADDataset:
     def update(self, select_indice):
         self.data = self.data[select_indice]
         self.targets = self.targets[select_indice]
-
+        
 
 class CIFAR10Dataset(DUADDataset, datasets.CIFAR10):
     def __init__(
@@ -64,7 +64,7 @@ class CIFAR10Dataset(DUADDataset, datasets.CIFAR10):
 
         return self.transform(data_i), target_i
         
-        
+
 class MNISTDataset(DUADDataset, datasets.MNIST):
     def __init__(
         self, root, train: bool = True, download: bool = True,
