@@ -79,6 +79,7 @@ class MNISTDataset(DUADDataset, datasets.MNIST):
         self.abnormal_sample_size = abnormal_sample_size
         self.random_state = random_state
         self.transform = transforms.Compose([
+            transforms.ToPILImage(),
             transforms.ToTensor(),
         ])
         
