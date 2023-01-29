@@ -1,0 +1,1 @@
+2023-01-25 06:44:51,614 -                train: [    INFO] - Device: cuda:0

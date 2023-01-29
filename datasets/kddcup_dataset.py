@@ -6,7 +6,7 @@ import pickle as pl
 
 class KDDCupData:
     def __init__(self, data_dir, mode):
-        """Loading the data for train and test."""
+        """ Loading the data for train and test. """
         data = np.load(data_dir, allow_pickle=True)
 
         labels = data["kdd"][:,-1]

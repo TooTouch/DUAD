@@ -27,7 +27,7 @@ class AutoEncoder(nn.Module):
                 in_channels=32,      # input height
                 out_channels=32,    # n_filters
                 kernel_size=5,      # filter size
-                stride=1,           # filter movement/step
+                stride=1,           # filter movement/stepP
                 padding=2,      
             ),      
             nn.LeakyReLU(),    # activation
