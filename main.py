@@ -6,7 +6,8 @@ import argparse
 import yaml
 
 from datasets import create_dataset, create_dataloader
-from models import create_model
+from datasets.kddcup_dataset import KDDCupData
+from models import create_model, create_kddcup_model
 from clusters import create_cluster
 from train import fit
 from log import setup_default_logging
@@ -34,10 +35,16 @@ def run(cfg):
         wandb.init(name=cfg['EXP_NAME'], project='DUAD', config=cfg)
 
     # build datasets
-    trainset, testset = create_dataset(
-        datadir  = cfg['DATASET']['datadir'],
-        dataname = cfg['DATASET']['name']
-    )
+    if cfg['DATASET']['name'] == 'KDDCUP':
+        print("KDDCUP")
+        data_dir = cfg['DATASET']['datadir']
+        trainset = KDDCupData(data_dir, 'train')
+        testset  = KDDCupData(data_dir, 'test')
+    else:
+        trainset, testset = create_dataset(
+            datadir  = cfg['DATASET']['datadir'],
+            dataname = cfg['DATASET']['name']
+        )
     
     # build dataloader
     trainloader = create_dataloader(
@@ -54,13 +61,19 @@ def run(cfg):
         num_workers = cfg['TRAIN']['num_workers']
     )
 
-
     # build feature extractor
-    model = create_model(
-        in_channels      = cfg['MODEL']['in_channels'],  
+    if cfg['DATASET']['name'] == 'KDDCUP':
+        model = create_kddcup_model(
+        in_features     = cfg['MODEL']['in_features'],  
         flatten_features = cfg['MODEL']['flatten_features'],
         latent_dim       = cfg['MODEL']['latent_dim']
-    ).to(device)
+        ).to(device)
+    else:
+        model = create_model(
+            in_channels      = cfg['MODEL']['in_channels'],  
+            flatten_features = cfg['MODEL']['flatten_features'],
+            latent_dim       = cfg['MODEL']['latent_dim']
+        ).to(device)
 
     # build clustsering method
     cluster = create_cluster(
@@ -103,7 +116,6 @@ def run(cfg):
         device        = device,
         use_wandb     = cfg['TRAIN']['use_wandb']
     )
-
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description='DUAD')

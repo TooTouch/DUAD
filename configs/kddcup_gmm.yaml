@@ -1,0 +1,41 @@
+EXP_NAME: DUAD_KDDCUP_GMM
+SEED: 42
+
+DATASET:
+  datadir: ./datasets/data/kdd_cup.npz
+  name: KDDCUP
+
+CLUSTER:
+  p0: 0.35
+  p: 0.3
+  r: 10
+  reeval_limit: 10
+  name: GMM
+  parameters:
+    num_cluster: 20
+    max_iter: 200
+
+MODEL:
+  in_features: 118
+  flatten_features: 119
+  latent_dim: 1
+
+TRAIN:
+  batch_size: 8
+  num_workers: 4
+  epochs: 100
+  use_wandb: false
+
+OPTIMIZER:
+  lr: 0.003
+
+SCHEDULER:
+  min_lr: 0.0001
+  warmup_ratio: 0.1
+  use_scheduler: true
+
+LOG:
+  log_interval: 5000
+
+RESULT:
+  savedir: './saved_model/KDDCUP'
