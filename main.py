@@ -68,6 +68,7 @@ def run(cfg):
         flatten_features = cfg['MODEL']['flatten_features'],
         latent_dim       = cfg['MODEL']['latent_dim']
         ).to(device)
+    
     else:
         model = create_model(
             in_channels      = cfg['MODEL']['in_channels'],  

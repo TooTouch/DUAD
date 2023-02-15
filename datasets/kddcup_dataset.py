@@ -8,7 +8,7 @@ class DUADDataset:
     def train_preprocessing(self):
         np.random.seed(self.random_state)
         
-        # select normal
+   ```` # select normal
         normal_indices = np.where(np.array(self.targets)==self.normal_class)[0]
         data = self.data[normal_indices]
         targets = np.zeros(normal_indices.shape)
@@ -37,7 +37,7 @@ class DUADDataset:
         self.targets = self.targets[select_indice]
 
 class KDDCupData(DUADDataset):
-    def __init__(self, data_dir, mode,  normal_class: int = 0, abnormal_sample_size: int = 50, random_state: int = 42):
+    def __init__(self, data_dir, mode,  normal_class: int = 0, abnormal_sample_size: int = 12847, random_state: int = 42):
         """Loading the data for train and test."""
         data = np.load(data_dir, allow_pickle=True)
 
